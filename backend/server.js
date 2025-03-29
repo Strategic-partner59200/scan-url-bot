@@ -29,7 +29,7 @@ app.use(cookieParser());
 
 // middleware to connect with frontend
 app.use(cors({
-    origin: "https://scan-url-bot.onrender.com",
+    origin: "https://scan-url-bot.vercel.app",
     credentials: true,
 }));
 
