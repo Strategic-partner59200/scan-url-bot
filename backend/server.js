@@ -29,7 +29,7 @@ app.use(cookieParser());
 
 // middleware to connect with frontend
 app.use(cors({
-    origin: "http://localhost:5173",
+    origin: "https://scan-url-bot.onrender.com",
     credentials: true,
 }));
 
