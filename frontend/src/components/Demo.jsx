@@ -47,7 +47,7 @@ const Demo = () => {
       setRoutes(response.data.routes);
     } catch (error) {
       console.error('Error scanning the website:', error);
-      alert('Failed to scan the website. Please check the URL and try again.');
+      alert('Échec de l analyse du site web. Veuillez vérifier URL et réessayer.');
     } finally {
       setLoading(false);
     }
@@ -66,11 +66,11 @@ const Demo = () => {
 
     try {
       await axios.post('/storeroutes', { routes });
-      alert('Bot created successfully!');
+      alert('Bot créé avec succès !');
       navigate('/chat-bot'); // Redirect to the /chat-bot page after bot creation
     } catch (error) {
       console.error('Error creating the bot:', error);
-      alert('Failed to create the bot. Please try again.');
+      alert('Échec de la création du bot. Veuillez réessayer.');
     } finally {
       setBotCreationLoading(false);
     }

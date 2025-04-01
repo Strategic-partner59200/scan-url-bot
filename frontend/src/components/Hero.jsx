@@ -9,7 +9,7 @@ const Hero = () => {
           to="/"
           className="orange_gradient text-4xl py-2 md:text-4xl  font-bold text-center md:text-left mb-4 md:mb-0"
         >
-          Botgeneration.ai
+          StrategicPartner
         </Link>
 
         {/* <Link
