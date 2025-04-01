@@ -1,5 +1,103 @@
+// const axios = require("axios");
+// const cheerio = require("cheerio");
+// const { OpenAI } = require("openai");
+// const dotenv = require("dotenv");
+
+// // Environment variable configuration
+// dotenv.config();
+
+// const openai = new OpenAI({
+//   apiKey: process.env.OPENAI_API_KEY,
+// });
+
+// let dynamicRoutes = [];
+// const storedRoutes = [];
+
+// function updateRoutes(newRoutes) {
+//     // Merging new routes and removing duplicates based on route URL
+//     const uniqueRoutes = [...dynamicRoutes, ...newRoutes].filter(
+//       (route, index, self) =>
+//         index === self.findIndex((r) => r.route === route.route)
+//     );
+//     dynamicRoutes = uniqueRoutes;
+//     console.log("Updated Dynamic Routes:", dynamicRoutes);
+//   }
+
+
+// const handleUserQuery = async (userQuery) => {
+//   const lowerCaseQuery = userQuery.toLowerCase();
+
+//   // Check if the query matches any of the predefined routes
+//   const matchedRoute = dynamicRoutes.find((route) => {
+//     return route.keywords.some((keyword) => {
+//       return lowerCaseQuery.includes(keyword.toLowerCase());
+//     });
+//   });
+
+//   if (matchedRoute) {
+//     // If a route is found, include it in the GPT prompt
+//     return await getGptResponse(userQuery, matchedRoute);
+//   } else {
+//     // If no route is found, fallback to GPT for the response
+//     return await getGptResponse(userQuery);
+//   }
+// };
+
+// // Constructing prompt for GPT with route included (if any)
+// const getGptResponse = async (userQuery, matchedRoute = null) => {
+//   // Construct prompt with or without the matched route
+//   const prompt = matchedRoute 
+//     ? constructPrompt(userQuery, dynamicRoutes, matchedRoute) 
+//     : constructPrompt(userQuery, dynamicRoutes);
+
+//   console.log("Constructed Prompt:", prompt);
+
+//   const response = await openai.chat.completions.create({
+//     model: "gpt-4o",
+//     messages: [
+//       { role: "system", content: "You are an intelligent assistant." },
+//       { role: "user", content: prompt },
+//     ],
+//   });
+
+//   // Log the GPT response for debugging
+//   if (response?.choices?.[0]?.message?.content) {
+//     console.log("OpenAI Response:", response);
+//     return response.choices[0].message.content.trim();
+//   } else {
+//     console.error("OpenAI response error: No content returned.");
+//     return "I encountered an error while fetching the response.";
+//   }
+// };
+
+// // Construct the GPT prompt with matched route information
+// function constructPrompt(userQuery, routes, matchedRoute = null) {
+//   let routeInfo = matchedRoute
+//     ? `You can find more about this topic here: ${matchedRoute.route}`
+//     : '';
+
+//   return `
+//     You are an intelligent assistant capable of answering a wide variety of questions. You also have access to a list of specific URLs related to certain topics. Use the following information to respond:
+
+//     Routes with Topics:
+//     ${routes
+//       .map((route) => `- URL: ${route.route}, Keywords: ${route.keywords.join(", ")}`)
+//       .join("\n")}
+    
+//     User Query: "${userQuery}"
+
+//     Additional Info (if any): ${routeInfo}
+    
+//     Instructions:
+//     1. If the query closely matches one of the topics in the routes, include the route link in your response.
+//     2. For unrelated questions, respond as you normally would using your general knowledge.
+
+//     Respond naturally and intelligently.
+//   `;
+// }
 const axios = require("axios");
 const cheerio = require("cheerio");
+const puppeteer = require("puppeteer");
 const { OpenAI } = require("openai");
 const dotenv = require("dotenv");
 
@@ -24,6 +122,7 @@ function updateRoutes(newRoutes) {
   }
 
 
+
 const handleUserQuery = async (userQuery) => {
   const lowerCaseQuery = userQuery.toLowerCase();
 
@@ -35,66 +134,103 @@ const handleUserQuery = async (userQuery) => {
   });
 
   if (matchedRoute) {
-    // If a route is found, include it in the GPT prompt
-    return await getGptResponse(userQuery, matchedRoute);
+    console.log(`Matched Route Found: ${matchedRoute.route}`);
+
+    // Scrape the website
+    const scrapedContent = await scrapeWebsite(matchedRoute.route);
+    
+    if (scrapedContent) {
+      console.log("Scraped Content:", scrapedContent.substring(0, 200)); // Log first 200 chars
+      const translatedText = await translateToFrench(scrapedContent);
+      console.log("Translated Response:", translatedText);
+      return translatedText;
+    } else {
+      console.log("Scraping returned empty content.");
+      return "Je n'ai pas pu récupérer les informations de cette page.";
+    }
   } else {
-    // If no route is found, fallback to GPT for the response
+    console.log("No matching route found, calling OpenAI.");
     return await getGptResponse(userQuery);
   }
 };
 
-// Constructing prompt for GPT with route included (if any)
-const getGptResponse = async (userQuery, matchedRoute = null) => {
-  // Construct prompt with or without the matched route
-  const prompt = matchedRoute 
-    ? constructPrompt(userQuery, dynamicRoutes, matchedRoute) 
-    : constructPrompt(userQuery, dynamicRoutes);
+// Debugging inside Scraping Function
+const scrapeWebsite = async (url) => {
+  try {
+    console.log("Scraping URL:", url);
+    const browser = await puppeteer.launch({ headless: true });
+    const page = await browser.newPage();
+    await page.goto(url, { waitUntil: "domcontentloaded" });
+
+    // Extract text content
+    const scrapedContent = await page.evaluate(() => {
+      return document.body.innerText || "";
+    });
+
+    await browser.close();
+    console.log("Raw Scraped Data:", scrapedContent ? scrapedContent.substring(0, 200) : "No Data Found");
+    
+    return scrapedContent ? scrapedContent.substring(0, 1000) : null; // Limit text
+  } catch (error) {
+    console.error("Error scraping website:", error);
+    return null;
+  }
+};
+
+
+// Function to translate text to French using OpenAI
+const translateToFrench = async (text) => {
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      // max_tokens: 50,
+      messages: [
+        { role: "system", content: "You are a translator who translates text into French." },
+        { role: "user", content: `Translate this to French:\n${text}` },
+      ],
+    });
+
+    return response?.choices?.[0]?.message?.content.trim() || "Erreur lors de la traduction.";
+  } catch (error) {
+    console.error("Error translating text:", error);
+    return "Erreur lors de la traduction.";
+  }
+};
+
+// Function to get GPT response if no route is matched
+const getGptResponse = async (userQuery) => {
+  const prompt = constructPrompt(userQuery, dynamicRoutes);
 
   console.log("Constructed Prompt:", prompt);
 
   const response = await openai.chat.completions.create({
     model: "gpt-4o",
+    // max_tokens: 50,
     messages: [
       { role: "system", content: "You are an intelligent assistant." },
       { role: "user", content: prompt },
     ],
   });
 
-  // Log the GPT response for debugging
   if (response?.choices?.[0]?.message?.content) {
-    console.log("OpenAI Response:", response);
     return response.choices[0].message.content.trim();
   } else {
-    console.error("OpenAI response error: No content returned.");
-    return "I encountered an error while fetching the response.";
+    return "Je n'ai pas pu obtenir de réponse.";
   }
 };
 
-// Construct the GPT prompt with matched route information
-function constructPrompt(userQuery, routes, matchedRoute = null) {
-  let routeInfo = matchedRoute
-    ? `You can find more about this topic here: ${matchedRoute.route}`
-    : '';
-
+// Function to construct the GPT prompt
+function constructPrompt(userQuery, routes) {
   return `
-    You are an intelligent assistant capable of answering a wide variety of questions. You also have access to a list of specific URLs related to certain topics. Use the following information to respond:
-
+    You are an intelligent assistant capable of answering a wide variety of questions.
     Routes with Topics:
-    ${routes
-      .map((route) => `- URL: ${route.route}, Keywords: ${route.keywords.join(", ")}`)
-      .join("\n")}
-    
+    ${routes.map((route) => `- URL: ${route.route}, Keywords: ${route.keywords.join(", ")}`).join("\n")}
+
     User Query: "${userQuery}"
-
-    Additional Info (if any): ${routeInfo}
-    
-    Instructions:
-    1. If the query closely matches one of the topics in the routes, include the route link in your response.
-    2. For unrelated questions, respond as you normally would using your general knowledge.
-
     Respond naturally and intelligently.
   `;
 }
+
 
 
   
