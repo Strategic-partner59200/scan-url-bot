@@ -27,11 +27,39 @@ const Demo = () => {
     localStorage.setItem('routes', JSON.stringify(routes));
   }, [routes]);
 
+  // const handleScan = async () => {
+  //   setLoading(true);
+  //   setRoutes([]);
+  //   setProgress(0);
+
+  //   const progressInterval = setInterval(() => {
+  //     setProgress((prev) => {
+  //       if (prev >= 100) {
+  //         clearInterval(progressInterval);
+  //         return 100;
+  //       }
+  //       return prev + 10;
+  //     });
+  //   }, 500);
+
+  //   try {
+  //     const response = await axios.post('/scan', { url });
+  //     setRoutes(response.data.routes);
+  //   } catch (error) {
+  //     console.error('Error scanning the website:', error);
+  //     alert('Échec de l analyse du site web. Veuillez vérifier URL et réessayer.');
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
   const handleScan = async () => {
     setLoading(true);
-    setRoutes([]);
+    setRoutes([]); // Clear existing routes
     setProgress(0);
-
+  
+    // Clear localStorage routes
+    localStorage.removeItem('routes');
+  
     const progressInterval = setInterval(() => {
       setProgress((prev) => {
         if (prev >= 100) {
@@ -41,12 +69,12 @@ const Demo = () => {
         return prev + 10;
       });
     }, 500);
-
+  
     try {
       const response = await axios.post('/scan', { url });
       setRoutes(response.data.routes);
     } catch (error) {
-      console.error('Error scanning the website:', error);
+      console.error("Error scanning the website:", error);
       alert('Échec de l analyse du site web. Veuillez vérifier URL et réessayer.');
     } finally {
       setLoading(false);
