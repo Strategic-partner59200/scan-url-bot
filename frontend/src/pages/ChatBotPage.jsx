@@ -199,9 +199,6 @@ const ChatBotPage = () => {
           >
             StrategicPartner
           </Link>
-          <div className="text-sm text-gray-500">
-            AI Assistant
-          </div>
         </header>
 
         {/* Chat Container */}
