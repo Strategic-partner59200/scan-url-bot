@@ -1,6 +1,6 @@
 const axios = require("axios");
 const cheerio = require("cheerio");
-const puppeteer = require("puppeteer");
+// const puppeteer = require("puppeteer");
 const { OpenAI } = require("openai");
 const dotenv = require("dotenv");
 
@@ -54,32 +54,66 @@ const handleUserQuery = async (userQuery) => {
     return await getGptResponsesGenerale();
   }
 };
-
-// Debugging inside Scraping Function
+// Cheerio-based scraping function
 const scrapeWebsite = async (url) => {
   try {
-    console.log("Scraping URL:", url);
-    const browser = await puppeteer.launch({ headless: true });
-    const page = await browser.newPage();
-    await page.goto(url, { waitUntil: "domcontentloaded" });
-
-    // Extract text content
-    const scrapedContent = await page.evaluate(() => {
-      return document.body.innerText || "";
+    console.log("Scraping URL with Cheerio:", url);
+    
+    // Fetch the page with axios
+    const response = await axios.get(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+      }
     });
-
-    await browser.close();
-    console.log(
-      "Raw Scraped Data:",
-      scrapedContent ? scrapedContent.substring(0, 200) : "No Data Found"
-    );
-
-    return scrapedContent ? scrapedContent.substring(0, 1000) : null; // Limit text
+    
+    // Load HTML into Cheerio
+    const $ = cheerio.load(response.data);
+    
+    // Remove script and style elements
+    $('script, style, noscript, iframe, head').remove();
+    
+    // Get clean text content
+    let textContent = $('body').text();
+    
+    // Clean up the text
+    textContent = textContent
+      .replace(/\s+/g, ' ') // Replace multiple spaces with single space
+      .replace(/[\t\n\r]+/g, ' ') // Replace tabs and newlines
+      .trim();
+    
+    console.log("Cheerio Scraped Data:", textContent ? textContent.substring(0, 200) : "No Data Found");
+    
+    return textContent ? textContent.substring(0, 1000) : null; // Limit text
   } catch (error) {
-    console.error("Error scraping website:", error);
+    console.error("Error scraping website with Cheerio:", error);
     return null;
   }
 };
+// // Debugging inside Scraping Function
+// const scrapeWebsite = async (url) => {
+//   try {
+//     console.log("Scraping URL:", url);
+//     const browser = await puppeteer.launch({ headless: true });
+//     const page = await browser.newPage();
+//     await page.goto(url, { waitUntil: "domcontentloaded" });
+
+//     // Extract text content
+//     const scrapedContent = await page.evaluate(() => {
+//       return document.body.innerText || "";
+//     });
+
+//     await browser.close();
+//     console.log(
+//       "Raw Scraped Data:",
+//       scrapedContent ? scrapedContent.substring(0, 200) : "No Data Found"
+//     );
+
+//     return scrapedContent ? scrapedContent.substring(0, 1000) : null; // Limit text
+//   } catch (error) {
+//     console.error("Error scraping website:", error);
+//     return null;
+//   }
+// };
 
 // Function to get GPT response if no route is matched
 const getGptResponsesGenerale = async (userQuery) => {
