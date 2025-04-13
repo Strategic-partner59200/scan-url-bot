@@ -87,7 +87,7 @@ const getGptResponsesGenerale = async (userQuery) => {
 
   const response = await openai.chat.completions.create({
     model: "gpt-4o",
-    max_tokens: 300,
+    max_tokens: 500,
     messages: [
       {
         role: "system",
@@ -113,7 +113,7 @@ const getGptResponse = async (userQuery) => {
 
   const response = await openai.chat.completions.create({
     model: "gpt-4o",
-    max_tokens: 300,
+    max_tokens: 500,
     messages: [
       {
         role: "system",
@@ -235,24 +235,37 @@ class ScanController {
   //   }
 
   //   try {
+  //     // Format the new routes
   //     const formattedRoutes = routes.map((route) => ({
   //       route,
-  //       keywords: route.split("/").filter(Boolean).map((part) => part.toLowerCase()),
+  //       keywords: route
+  //         .split("/")
+  //         .filter(Boolean)
+  //         .map((part) => part.toLowerCase()),
   //     }));
 
-  //     const existingRouteUrls = storedRoutes; // These should be strings
+  //     // Get existing route URLs for comparison
+  //     const existingRouteUrls = dynamicRoutes.map((r) => r.route);
 
+  //     // Filter out routes that already exist
   //     const newRoutes = formattedRoutes.filter(
   //       (routeObj) => !existingRouteUrls.includes(routeObj.route)
   //     );
 
   //     if (newRoutes.length > 0) {
+  //       // Update both dynamicRoutes and storedRoutes
   //       updateRoutes(newRoutes);
   //       storedRoutes.push(...newRoutes.map((r) => r.route));
+  //       console.log("New routes stored:", newRoutes);
+  //     } else {
+  //       console.log("No new routes to store");
   //     }
 
-  //     console.log("New routes stored:", newRoutes);
-  //     res.status(200).json({ message: "Routes stored successfully.", routes: newRoutes });
+  //     res.status(200).json({
+  //       message: "Routes processed successfully",
+  //       newRoutes: newRoutes.length,
+  //       totalRoutes: dynamicRoutes.length,
+  //     });
   //   } catch (error) {
   //     console.error("Error storing routes:", error.message);
   //     res.status(500).json({ error: "Failed to store the routes." });
@@ -260,46 +273,44 @@ class ScanController {
   // }
   static async storeRoutes(req, res) {
     const { routes } = req.body;
-
+  
     if (!routes || !Array.isArray(routes)) {
       return res.status(400).json({ error: "Routes must be an array." });
     }
-
+  
     try {
-      // Format the new routes
-      const formattedRoutes = routes.map((route) => ({
+      // COMPLETELY REPLACE existing routes instead of merging
+      dynamicRoutes = routes.map((route) => ({
         route,
         keywords: route
           .split("/")
           .filter(Boolean)
           .map((part) => part.toLowerCase()),
       }));
-
-      // Get existing route URLs for comparison
-      const existingRouteUrls = dynamicRoutes.map((r) => r.route);
-
-      // Filter out routes that already exist
-      const newRoutes = formattedRoutes.filter(
-        (routeObj) => !existingRouteUrls.includes(routeObj.route)
-      );
-
-      if (newRoutes.length > 0) {
-        // Update both dynamicRoutes and storedRoutes
-        updateRoutes(newRoutes);
-        storedRoutes.push(...newRoutes.map((r) => r.route));
-        console.log("New routes stored:", newRoutes);
-      } else {
-        console.log("No new routes to store");
-      }
-
+  
+      // Also replace storedRoutes
+      storedRoutes.length = 0;
+      storedRoutes.push(...routes);
+  
+      console.log("All routes replaced with new set:", dynamicRoutes);
       res.status(200).json({
-        message: "Routes processed successfully",
-        newRoutes: newRoutes.length,
+        message: "Routes replaced successfully",
         totalRoutes: dynamicRoutes.length,
       });
     } catch (error) {
       console.error("Error storing routes:", error.message);
       res.status(500).json({ error: "Failed to store the routes." });
+    }
+  }
+  static async resetRoutes(req, res) {
+    try {
+      dynamicRoutes = [];
+      storedRoutes.length = 0;
+      console.log("All routes cleared");
+      res.status(200).json({ message: "All routes cleared successfully" });
+    } catch (error) {
+      console.error("Error resetting routes:", error.message);
+      res.status(500).json({ error: "Failed to reset routes." });
     }
   }
 }
