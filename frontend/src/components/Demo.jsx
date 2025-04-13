@@ -1,21 +1,13 @@
-
-
-
-
-
-
-
-
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom'; // Import useNavigate for redirection
-import axios from 'axios';
-import { Button } from 'antd';
-import { DeleteOutlined, LinkOutlined } from '@ant-design/icons';
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom"; // Import useNavigate for redirection
+import axios from "axios";
+import { Button } from "antd";
+import { DeleteOutlined, LinkOutlined } from "@ant-design/icons";
 
 const Demo = () => {
-  const [url, setUrl] = useState('');
+  const [url, setUrl] = useState("");
   const [routes, setRoutes] = useState(() => {
-    const storedRoutes = localStorage.getItem('routes');
+    const storedRoutes = localStorage.getItem("routes");
     return storedRoutes ? JSON.parse(storedRoutes) : [];
   });
   const [loading, setLoading] = useState(false);
@@ -24,42 +16,17 @@ const Demo = () => {
   const navigate = useNavigate(); // Initialize useNavigate for navigation
 
   useEffect(() => {
-    localStorage.setItem('routes', JSON.stringify(routes));
+    localStorage.setItem("routes", JSON.stringify(routes));
   }, [routes]);
 
-  // const handleScan = async () => {
-  //   setLoading(true);
-  //   setRoutes([]);
-  //   setProgress(0);
-
-  //   const progressInterval = setInterval(() => {
-  //     setProgress((prev) => {
-  //       if (prev >= 100) {
-  //         clearInterval(progressInterval);
-  //         return 100;
-  //       }
-  //       return prev + 10;
-  //     });
-  //   }, 500);
-
-  //   try {
-  //     const response = await axios.post('/scan', { url });
-  //     setRoutes(response.data.routes);
-  //   } catch (error) {
-  //     console.error('Error scanning the website:', error);
-  //     alert('Échec de l analyse du site web. Veuillez vérifier URL et réessayer.');
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
   const handleScan = async () => {
     setLoading(true);
     setRoutes([]); // Clear existing routes
     setProgress(0);
-  
+
     // Clear localStorage routes
-    localStorage.removeItem('routes');
-  
+    localStorage.removeItem("routes");
+
     const progressInterval = setInterval(() => {
       setProgress((prev) => {
         if (prev >= 100) {
@@ -69,13 +36,15 @@ const Demo = () => {
         return prev + 10;
       });
     }, 500);
-  
+
     try {
-      const response = await axios.post('/scan', { url });
+      const response = await axios.post("/scan", { url });
       setRoutes(response.data.routes);
     } catch (error) {
       console.error("Error scanning the website:", error);
-      alert('Échec de l analyse du site web. Veuillez vérifier URL et réessayer.');
+      alert(
+        "Échec de l analyse du site web. Veuillez vérifier URL et réessayer."
+      );
     } finally {
       setLoading(false);
     }
@@ -83,8 +52,10 @@ const Demo = () => {
 
   const handleDeleteRoute = (routeToDelete) => {
     setRoutes((prevRoutes) => {
-      const updatedRoutes = prevRoutes.filter((route) => route !== routeToDelete);
-      localStorage.setItem('routes', JSON.stringify(updatedRoutes));
+      const updatedRoutes = prevRoutes.filter(
+        (route) => route !== routeToDelete
+      );
+      localStorage.setItem("routes", JSON.stringify(updatedRoutes));
       return updatedRoutes;
     });
   };
@@ -93,12 +64,13 @@ const Demo = () => {
     setBotCreationLoading(true);
 
     try {
-      await axios.post('/storeroutes', { routes });
-      alert('Bot créé avec succès !');
-      navigate('/chat-bot'); // Redirect to the /chat-bot page after bot creation
+      const res = await axios.post("/storeroutes", { routes });
+      console.log("Routes stored successfully:", res.data);
+      alert("Bot créé avec succès !");
+      navigate("/chat-bot"); // Redirect to the /chat-bot page after bot creation
     } catch (error) {
-      console.error('Error creating the bot:', error);
-      alert('Échec de la création du bot. Veuillez réessayer.');
+      console.error("Error creating the bot:", error);
+      alert("Échec de la création du bot. Veuillez réessayer.");
     } finally {
       setBotCreationLoading(false);
     }
@@ -128,7 +100,7 @@ const Demo = () => {
           className="px-6 py-3 bg-blue-500 text-white rounded-lg font-semibold cursor-pointer w-full sm:w-auto"
           disabled={loading}
         >
-          {loading ? 'Scan en cours...' : 'Scanner'}
+          {loading ? "Scan en cours..." : "Scanner"}
         </button>
       </div>
 
@@ -169,17 +141,29 @@ const Demo = () => {
         </ul>
 
         {routes.length > 0 && (
-          <button
-            onClick={handleBotCreation}
-            className={`mt-4 px-6 py-3 rounded-lg font-semibold text-white ${
-              botCreationLoading
-                ? 'bg-gray-500 cursor-not-allowed'
-                : 'bg-green-500 hover:bg-green-600'
-            }`}
-            disabled={botCreationLoading}
-          >
-            {botCreationLoading ? 'Création en cours...' : 'Créer votre bot'}
-          </button>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4 mt-4">
+            <button
+              onClick={handleBotCreation}
+              className={`mt-4 px-6 py-3 rounded-lg font-semibold text-white ${
+                botCreationLoading
+                  ? "bg-gray-500 cursor-not-allowed"
+                  : "bg-green-500 hover:bg-green-600"
+              }`}
+              disabled={botCreationLoading}
+            >
+              {botCreationLoading ? "Création en cours..." : "Créer votre bot"}
+            </button>
+
+            <button
+              onClick={() => {
+                setRoutes([]);
+                localStorage.removeItem("routes");
+              }}
+              className="px-6 py-3 mt-4 rounded-lg font-semibold text-white bg-red-500 hover:bg-red-600"
+            >
+              Supprimer toutes les URLs
+            </button>
+          </div>
         )}
       </div>
     </div>
@@ -187,6 +171,3 @@ const Demo = () => {
 };
 
 export default Demo;
-
-
-
