@@ -60,14 +60,32 @@ const Demo = () => {
     });
   };
 
+  // const handleBotCreation = async () => {
+  //   setBotCreationLoading(true);
+
+  //   try {
+  //     const res = await axios.post("/storeroutes", { routes });
+  //     console.log("Routes stored successfully:", res.data);
+  //     alert("Bot créé avec succès !");
+  //     navigate("/chat-bot"); // Redirect to the /chat-bot page after bot creation
+  //   } catch (error) {
+  //     console.error("Error creating the bot:", error);
+  //     alert("Échec de la création du bot. Veuillez réessayer.");
+  //   } finally {
+  //     setBotCreationLoading(false);
+  //   }
+  // };
+
   const handleBotCreation = async () => {
     setBotCreationLoading(true);
-
     try {
+      // First reset existing routes
+      await axios.post('/reset-routes');
+      // Then store new routes
       const res = await axios.post("/storeroutes", { routes });
       console.log("Routes stored successfully:", res.data);
       alert("Bot créé avec succès !");
-      navigate("/chat-bot"); // Redirect to the /chat-bot page after bot creation
+      navigate("/chat-bot");
     } catch (error) {
       console.error("Error creating the bot:", error);
       alert("Échec de la création du bot. Veuillez réessayer.");
