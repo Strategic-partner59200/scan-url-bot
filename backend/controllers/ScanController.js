@@ -93,7 +93,16 @@ const handleUserQuery = async (userQuery) => {
 const scrapeWebsite = async (url) => {
   try {
     console.log("Scraping URL:", url);
-    const browser = await puppeteer.launch({ headless: true });
+    const browser = await puppeteer.launch({ 
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        "--single-process",
+      ],
+      userDataDir: process.env.PUPPETEER_CACHE_DIR,
+      headless: true,
+     });
     const page = await browser.newPage();
     await page.goto(url, { waitUntil: "domcontentloaded" });
 
